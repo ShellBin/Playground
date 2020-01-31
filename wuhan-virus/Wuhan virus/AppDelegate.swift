@@ -17,7 +17,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         if let button = statusItem.button {
-            button.title = getData();
+            button.title = "hello"
+            getData()
+            
         }
     }
 
@@ -25,16 +27,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     }
     
+    static var minions:[Minion] = [] {
+        didSet {
+            NSNotificationCenter.defaultCenter().postNotificationName("minionsFetched", object: nil)
+       }
+    }
     
     func getData() -> String {
         let url = URL(string: "https://3g.dxy.cn/newh5/view/pneumonia")!
 
         let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
             guard let data = data else { return }
-            return (String(data: data, encoding: .utf8)!)
+            let httpData = (String(data: data, encoding: .utf8)!)
+            print (httpData)
+            
+            let regex = try! NSRegularExpression(pattern: "<script id=\"getAreaStat\">(.*)</script>", options: NSRegularExpression.Options.caseInsensitive)
+            let textData = regex.matches(in: httpData, options: [], range: NSRange(location: 0, length: httpData.count))
+            
+            if let match = textData.first {
+                let range = match.range(at:1)
+                if let swiftRange = Range(range, in: httpData) {
+                    let xml = httpData[swiftRange]
+                    return String(xml)
+                }
+            }
         }
         task.resume()
     }
-
-
 }
