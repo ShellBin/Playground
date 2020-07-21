@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShellBin</title>
+</head>
+
+<style type="text/css">
+    a {
+        color: #F8F8F8;
+        text-decoration : none
+    }
+    a.blog:hover {
+        color: #FF579A;
+    }
+    a.links:hover {
+        color: #FFCC5C;
+    }
+
+    @media (max-width: 1500px) {
+        .right {
+            margin-left: 4em !important;
+            width: 20em !important;
+        }
+    }
+
+    @media (max-width: 930px) {
+        .context {
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+        }
+        .introduction {
+            width: 20em !important;
+        }
+        .name {
+            font-size: 4em !important;
+        }
+        .link {
+            margin-top: 1em !important;
+            font-size: 2em !important;
+        }
+        .right {        
+            margin-left: 0 !important;
+            margin-top: 5em !important;
+        }
+    }
+</style>
+
+<body style="background-color:#1E1F1C; margin: 0; height: 100%; display: flex; justify-content: center; align-items: center;">
+    <div class="context" style="display: flex;">
+        <div class="left" style="display: flex; flex-direction: column; color: #F8F8F8;">
+            <h1 class="name" style="font-size: 8em; margin: 0em; letter-spacing:3px">
+                ShellBin</h1>
+            <p class="introduction" style="margin: 0em;">
+                A computer-loving person who enjoys everything.</p>
+            <div class="link" style="display: flex; flex-direction: column; margin-top: 5em; font-size: 3em; width: 5em;">
+                    <a class="blog" href="https://blog.shellbin.me" target="_blank" style="color: #FF579A;">My Blog</a>
+                    <a class="links" href="https://shellbin.me/lib/links" target="_blank">My Links</a>
+            </div>
+        </div>    
+        <img class="right" src="fafa.svg" type="image/svg+xml"/ style="width: 30em; margin-left: 15em;">
+    </div>
+    </div>       
+</body>
+</html>
