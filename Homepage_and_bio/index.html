@@ -2,6 +2,7 @@
 <html lang="en" style="height:100%;">
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#1E1F1C">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShellBin</title>
 </head>
@@ -28,7 +29,6 @@
     @media (max-width: 930px) {
         .context {
             display: flex; 
-            flex-direction: column;
             justify-content: center; 
             align-items: center;
         }
@@ -46,6 +46,72 @@
             margin-left: 0 !important;
             margin-top: 5em !important;
         }
+    }
+
+    @media (max-width: 820px) and (orientation: portrait) {
+        .context {
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+        }
+    }
+
+    @media (max-width: 820px) and (orientation: landscape) {
+        .context {
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
+        .right {
+            margin-top: 1em !important;
+        }
+    }
+
+    @media (max-width: 320px) and (orientation: portrait) {
+        .context {
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+        }
+        .introduction {
+            width: 20em !important;
+        }
+        .name {
+            font-size: 3em !important;
+        }
+        .link {
+            margin-top: 1em !important;
+            font-size: 1.5em !important;
+        }
+        .right {        
+            margin-left: 0 !important;
+            margin-top: 2em !important;
+        }
+    }
+
+    @media (max-width: 570px) and (orientation: landscape) {
+        .context {
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
+        .introduction {
+            width: 15em !important;
+        }
+        .name {
+            font-size: 3em !important;
+        }
+        .link {
+            margin-top: 1em !important;
+            font-size: 1.5em !important;
+        }
+        .right {        
+            margin-left: 0 !important;
+            margin-top: 1em !important;
+        }
+    }
     }
 </style>
 
