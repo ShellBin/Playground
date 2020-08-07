@@ -1,89 +1,138 @@
 package me.shellbin;
 
+import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.gui2.*;
+import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.screen.Screen;
+import com.googlecode.lanterna.screen.TerminalScreen;
+import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
+import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
+
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class telnetServer {
-
     public static final int PORT = 23;
-    private ServerSocket serverSocket = null;
-    private ExecutorService executorService = null;
-    private final int Thread_POOL_SIZE = 3;
 
-    public telnetServer() throws Exception {
-        //打印服务器情况
-        Runtime serverRuntime = Runtime.getRuntime();
-        int availableCPU = serverRuntime.availableProcessors();
-        executorService = Executors.newFixedThreadPool(availableCPU * Thread_POOL_SIZE);
-        serverSocket = new ServerSocket(PORT);
-        System.out.println("Server Started with " + availableCPU +" CPUs and " + availableCPU * Thread_POOL_SIZE +" Threads");
-        System.out.println("JVM Max RAM: " + serverRuntime.maxMemory() / (1024 * 1024)+ "MB, Free RAM: " + serverRuntime.freeMemory()/ (1024 * 1024)+ "MB");
-        System.out.println("Waiting for client...");
+    public static void main(String[] args) throws IOException {
+        TelnetTerminalServer telnetTerminalServer = new TelnetTerminalServer(PORT);
+        System.out.println("TelnetServer is linsting port " + PORT);
 
-        //等待服务器被连接
-        while(true){
-            try{
-                Socket socket = serverSocket.accept();
-                executorService.execute(new Responser(socket));
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    class Responser implements  Runnable {
-        private Socket socket = null;
-        public Responser(Socket socket) {
-            this.socket = socket;
-        }
-
-        public void run() {
-            try{
-                String clientIP = socket.getInetAddress().getHostAddress();
-                System.out.println("User " + clientIP + ":" + socket.getPort() + " Connected\r\n");
-                InputStream socketInStream = socket.getInputStream();
-                BufferedReader br = new BufferedReader(new InputStreamReader(socketInStream, "UTF-8"));
-                OutputStream socketOutStream = socket.getOutputStream();
-
-                socketOutStream.write(("Shell>").getBytes("GBK"));
-                String clientRequestString = null;
-                while((clientRequestString = br.readLine()) != null){
-                    System.out.println(clientIP + ": " + clientRequestString);
-                    String serverReturn = null;
-                    if(clientRequestString.equals("quit")){
-                        serverReturn = "断开连接.\r\n";
-                        System.out.println("发送给客户端" + clientIP + "应答信息:" + serverReturn);
-                        socketOutStream.write(serverReturn.getBytes("GBK"));
-                        System.out.println("结束来自 " + clientIP + ":" + socket.getPort() + " 的请求");
-                        break;
-                    }else{
-                        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss E");
-                        serverReturn = df.format(new Date()) + "\r\n";
-                        System.out.println("发送给客户端 " + clientIP + "应答信息:" + serverReturn);
-                        socketOutStream.write((serverReturn+"\r\nShell>").getBytes("GBK"));
-                    }
-                }
-
-            }catch(Exception e){
-                e.printStackTrace();
-            }finally{
+        while(true) {
+            final TelnetTerminal telnetTerminal = telnetTerminalServer.acceptConnection();
+            System.out.println(telnetTerminal.getRemoteSocketAddress() + " connected server!");
+            Thread thread = new Thread(() -> {
                 try {
-                    if(socket != null){
-                        socket.close();
-                    }
-                } catch (IOException e) {
+                    runGUI(telnetTerminal);
+                }
+                catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
+                try {
+                    telnetTerminal.close();
+                }
+                catch (IOException ignore) {}
+            });
+            thread.start();
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        new telnetServer();
+    private static final List<TextBox> ALL_TEXTBOXES = new ArrayList<>();
+
+    @SuppressWarnings({"rawtypes"})
+    private static void runGUI(final TelnetTerminal telnetTerminal) throws IOException {
+        Screen screen = new TerminalScreen(telnetTerminal);
+        screen.startScreen();
+        final MultiWindowTextGUI textGUI = new MultiWindowTextGUI(screen);
+        textGUI.setBlockingIO(false);
+        textGUI.setEOFWhenNoWindows(true);
+        try {
+            final BasicWindow window = new BasicWindow("Text GUI over Telnet");
+            Panel contentArea = new Panel();
+            contentArea.setLayoutManager(new LinearLayout(Direction.VERTICAL));
+            contentArea.addComponent(new Button("Button", () -> {
+                final BasicWindow messageBox = new BasicWindow("Response");
+                messageBox.setComponent(Panels.vertical(
+                        new Label("Hello!"),
+                        new Button("Close", messageBox::close)));
+                textGUI.addWindow(messageBox);
+            }).withBorder(Borders.singleLine("This is a button")));
+
+
+            final TextBox textBox = new TextBox(new TerminalSize(20, 4)) {
+                @Override
+                public Result handleKeyStroke(KeyStroke keyStroke) {
+                    try {
+                        return super.handleKeyStroke(keyStroke);
+                    }
+                    finally {
+                        for(TextBox box: ALL_TEXTBOXES) {
+                            if(this != box) {
+                                box.setText(getText());
+                            }
+                        }
+                    }
+                }
+            };
+            ALL_TEXTBOXES.add(textBox);
+            contentArea.addComponent(textBox.withBorder(Borders.singleLine("Text editor")));
+            contentArea.addComponent(new AbstractInteractableComponent() {
+                String text = "Press any key";
+                @Override
+                protected InteractableRenderer createDefaultRenderer() {
+                    return new InteractableRenderer() {
+                        @Override
+                        public TerminalSize getPreferredSize(Component component) {
+                            return new TerminalSize(72, 1);
+                        }
+
+                        @Override
+                        public void drawComponent(TextGUIGraphics graphics, Component component) {
+                            graphics.putString(0, 0, text);
+                        }
+
+                        @Override
+                        public TerminalPosition getCursorLocation(Component component) {
+                            return TerminalPosition.TOP_LEFT_CORNER;
+                        }
+                    };
+                }
+
+                @Override
+                public Result handleKeyStroke(KeyStroke keyStroke) {
+                    if(keyStroke.getKeyType() == KeyType.Tab ||
+                            keyStroke.getKeyType() == KeyType.ReverseTab) {
+                        return super.handleKeyStroke(keyStroke);
+                    }
+                    if(keyStroke.getKeyType() == KeyType.Character) {
+                        text = "Character: " + keyStroke.getCharacter() + (keyStroke.isCtrlDown() ? " (ctrl)" : "") +
+                                (keyStroke.isAltDown() ? " (alt)" : "");
+                    }
+                    else {
+                        text = "Key: " + keyStroke.getKeyType() + (keyStroke.isCtrlDown() ? " (ctrl)" : "") +
+                                (keyStroke.isAltDown() ? " (alt)" : "");
+                    }
+                    return Interactable.Result.HANDLED;
+                }
+            }.withBorder(Borders.singleLine("Custom component")));
+
+            contentArea.addComponent(new Button("Close", window::close));
+            window.setComponent(contentArea);
+
+            textGUI.addWindowAndWait(window);
+        }
+        finally {
+            try {
+                screen.stopScreen();
+            }
+            catch (SocketException ignore) {
+                // If the telnet client suddenly quit, we'll get an exception when we try to get the client to exit
+                // private mode, but that's fine, no need to report this
+            }
+        }
     }
 }
