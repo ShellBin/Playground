@@ -79,3 +79,49 @@ BIOS 依赖目标 CPU 的微码，微码则与 CPUID 是绑定的。换句话说
 
 ## 获得微码更新
 ### 方法1：从英特尔的 Linux 微码补丁中获得
+
+在 2018 年 4 月之前，可以从英特尔官网获取 microcode.dat。但在这之后他们一直改变微码文件的格式。在 2018 年 4 月之前获得历史微码更新的一种方法是使用针对 Linux 发行版打包的版本，例如 Ubuntu：
+
+https://launchpad.net/ubuntu/+source/intel-microcode/3.20180108.0~ubuntu14.04.2
+
+microcode-yyyymmdd.dat 文件就是微码补丁了。可以用 microcode.exe 将其转换为单个二进制微码补丁：
+<!-- ![avatar](https://www.zephray.me/api/media/1597466438541-20200815004551.png) -->
+
+解压缩这些文件。现在应该有大量单个的 .bin 二进制文件。
+
+### 方法2：从 BIOS 中提取
+从已有的 BIOS dump文件中提取微码补丁也可以。使用相同的 intelmicrocodelist.exe，它可以帮你找到所有微码补丁程序在文件的哪里，使用 dd 命令将他们提取到单个的文件中即可。
+<!-- ![avatar](https://www.zephray.me/api/media/1597506111544-20200815114503.png) -->
+
+似乎这里包含的微码补丁比 Linux 补丁还要新，我不确定这是为什么。
+
+## 从 BIOS 提取微码模块
+可以使用 phoenixtool 来从 BIOS 中提取微码模块，将 ROM 文件以原始 ROM 方式打开。它应该可以自动提取并保存模块到名为 DUMP 的文件夹中。
+<!-- ![avatar](https://www.zephray.me/api/media/1597464279443-20200815000859.png) -->
+
+在 X61 上，UPDATE.ROM 已经包含微码补丁。可以使用 intelmicrocodelist.exe 进行验证：
+<!-- ![avatar](https://www.zephray.me/api/media/1597466584965-20200815004811.png) -->
+
+请注意，微码不是从 0 偏移量开始的，但会在文件的末尾结束。这意味着文件的开头还包含其他内容，不过将更多微码附在文件中应该是安全的。
+
+## 组装新的微码模块
+此步骤将会向 X61 的 UPDATE.ROM 中添加缺少的微码。
+
+首先，提取微码模块的标头，以便之后可以在标头后追加新的微码。
+<!-- ![avatar](https://www.zephray.me/api/media/1597501039631-20200815102240.png) -->
+
+然后就可以将微码补丁用 cat 命令添加到 UPDATE0.ROM 中了。我添加了 6FA、6FD、10676 和 1067A，这应该已经涵盖所有 MP 步进 Merom 和 Penryn 处理器了。但如果处理器是 ES 版或早期步进版，则还需要添加一些其他微码补丁。
+
+用 cat 命令将微码补丁追加到新的 UPDATE0_TARGET.ROM 的末尾方法如下所示：
+
+```shell
+#!/bin/sh
+cat microcode/cpu000006fa_plat00000080_ver00000095_date20101002.bin >> UPDATE0_TARGET.ROM
+cat microcode/cpu000006fd_plat00000080_ver000000a4_date20101002.bin >> UPDATE0_TARGET.ROM
+cat microcode/cpu00010676_plat00000080_ver0000060f_date20100929.bin >> UPDATE0_TARGET.ROM
+cat microcode/cpu0001067a_plat000000a0_ver00000a07_date20080409.bin >> UPDATE0_TARGET.ROM
+```
+这样就完成了。
+
+## 更换 BIOS 中的微码模块
+此步骤的目的是用刚刚新的微码模块替换 BIOS 中的原始微码模块。
