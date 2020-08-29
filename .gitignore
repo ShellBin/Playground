@@ -2,3 +2,4 @@ telnetServer_demo/.idea/
 target/
 out/
 .DS_Store
+.idea
