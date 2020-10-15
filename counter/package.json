@@ -1,0 +1,13 @@
+{
+  "name": "Playground",
+  "version": "1.0.0",
+  "dependencies": {
+    "axios": "^0.20.0",
+    "cheerio": "^1.0.0-rc.3",
+    "requset": "0.0.1-security",
+    "sqlite3": "^5.0.0"
+  },
+  "devDependencies": {
+    "request": "^2.88.2"
+  }
+}
