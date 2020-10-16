@@ -44,9 +44,28 @@ function savaDataToArr () {
 function saveDataToFile () {
     fs.writeFile('store.json', JSON.stringify(arrData), function (err){
         if(err) {
-            return console.error(err)
+            console.error(err)
         }
-        console.log('Data saved (store.dat)')
+        console.log('Data saved (store.json)')
+    })
+}
+
+// 从文件读取已存在数据
+function readDataFromFile () {
+    // 判断文件是否存在
+    fs.stat('store.json',function (err,stat){
+        if(stat&&stat.isFile()) {
+            // 存在时读取文件
+            fs.readFile('store.json',function (err,data){
+                if (err) {
+                    console.error(err)
+                }
+                arrData = JSON.parse(data.toString())
+            })
+        } else {
+            // 不存在时仅做提醒
+            console.log('store.json does not exist, Will be created automatically')
+        }
     })
 }
 
@@ -71,6 +90,7 @@ function setTimer () {
 
 // 程序入口
 function start () {
+    readDataFromFile()
     setTimer()
 
     http.createServer(function (request, response) {
