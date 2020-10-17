@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <title>图书馆剩余座位数量？</title>
+</head>
+<body>
+    <div>
+        <canvas id="canvas" style="width: 400px; height: 200px;"></canvas>
+    </div>
+</body>
+<script>
+    const urlAPI = 'http://127.0.0.1:8888'
+
+    const ctx = document.getElementById('canvas').getContext('2d')
+
+    let labels = new Array(288)
+    let datasets = []
+
+    let arrData = new Array(7)
+    for (let i = 0; i < arrData.length; i++) {
+        arrData[i] = new Array(288)
+    }
+
+    // 获取数据
+    async function fetchAPI() {
+        return await axios.get(urlAPI)
+            .then(function (response) {
+                return response.data
+            })
+            .catch(function (error) {
+                console.log(error)
+            })
+    }
+
+    // 生成整小时的 labels（x轴） 集
+    function genLabels() {
+        let j = 0
+        for (let i = 0; i < arrData[0].length; i++) {
+            if(i%12 === 0) {
+                labels[i] = j.toString() +':00'
+                j++
+            } else {
+                labels[i] = ''
+            }
+        }
+    }
+
+    // 生成七天数据的 datasets （y轴） 集
+    function genDatasets() {
+        datasets = [
+            {
+                label: "星期一",
+                backgroundColor: '#36A2EB',
+                borderColor: '#36A2EB',
+                fill: false,
+                data : arrData[1]
+            },
+            {
+                label: "星期二",
+                backgroundColor: '#FFCD56',
+                borderColor: '#FFCD56',
+                fill: false,
+                data : arrData[2]
+            },
+            {
+                label: "星期三",
+                backgroundColor: '#4BC0C0',
+                borderColor: '#4BC0C0',
+                fill: false,
+                data : arrData[3]
+            },
+            {
+                label: "星期四",
+                backgroundColor: '#C9CBCF',
+                borderColor: '#C9CBCF',
+                fill: false,
+                data : arrData[4]
+            },
+            {
+                label: "星期五",
+                backgroundColor: '#9966FF',
+                borderColor: '#9966FF',
+                fill: false,
+                data : arrData[5]
+            },
+            {
+                label: "星期六",
+                backgroundColor: '#FF6384',
+                borderColor: '#FF6384',
+                fill: false,
+                data : arrData[6]
+            },
+            {
+                label: "星期日",
+                backgroundColor: '#B5D62E',
+                borderColor: '#B5D62E',
+                fill: false,
+                data : arrData[0]
+            },
+        ]
+    }
+
+    // 渲染图表
+    fetchAPI().then(arr => {
+        arrData = arr
+        genLabels()
+        genDatasets()
+        let myLineChart = new Chart(ctx, {
+            type: "line",
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: '剩余座位数量'
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: '剩余座位'
+                        }
+                    }]
+                }
+            }
+        });
+    })
+</script>
+<style>
+    a {
+        text-decoration:none;
+        color:inherit;
+    }
+    body {
+        margin: 0;
+    }
+</style>
+</html>
