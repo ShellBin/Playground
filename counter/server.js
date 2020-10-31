@@ -3,7 +3,7 @@ const cheerio = require('cheerio')
 const fs = require('fs')
 const http = require('http')
 
-const url = 'http://rgyy.wfust.edu.cn/book/more/type/4/lib/11'
+const url = 'http://rgyy.wfust.edu.cn'
 const port = 8888
 
 // 存储七日数据
@@ -13,14 +13,34 @@ for (let i = 0; i < arrData.length; i++) {
     arrData[i] = new Array(288)
 }
 
-// 请求解析剩余座位数量,返回当前剩余座位数字
+// 从主页取出当前的预约页面 URL
+let urlAPI = 'http://rgyy.wfust.edu.cn'
+function fetchAPIUrl () {
+    axios.get(url)
+        .then(function (response) {
+            const $ = cheerio.load(response.data)
+            urlAPI = 'http://rgyy.wfust.edu.cn'+ ($('.btn-info').attr('href'))
+            if (urlAPI !== 'http://rgyy.wfust.edu.cn'){
+                console.log('成功获取今日地址 '+ urlAPI)
+            } else {
+                console.log('获取有误，可能是接口有误或服务器关机')
+            }
+        })
+        .catch(function (error) {
+            console.error(error)
+        })
+}
+
+
+// 请求解析当前人数,返回当前人数
 async function fetchNumFromHtml () {
     let counterDomNum = 0
-    await axios.get(url)
+    await axios.get(urlAPI)
         .then(function (response) {
             const $ = cheerio.load(response.data,{decodeEntities: false})
-            const counterDom = $("div.col-xs-12.col-md-4 > span").text().slice(0,-1)
-            counterDomNum = parseInt(counterDom)
+            const counterDom = $("body > div.col-xs-12.col-sm-9.xiaoqu > div.x_panel > div.col-xs-12.col-md-9.content > div:nth-child(2)").text().substring(6,14)
+            console.log('当前数据 RAW： ' + counterDom)
+            counterDomNum = parseInt(counterDom.split('/')[0])
         })
         .catch(function (error) {
             console.error(error)
@@ -73,10 +93,14 @@ function readDataFromFile () {
 function setTimer () {
     console.log('Start Timer')
 
-    // 半分钟一次触发，检查时间是否整五分钟
+    // 半分钟一次触发，检查时间是否整五分钟，并获取新的 API 地址
     setInterval(function() {
         const myDate = new Date()
-        //整五分钟时将数据存入对应时间数组下标
+        // 没有有效 API 地址的时候每半分钟获取一次
+        if (urlAPI === 'http://rgyy.wfust.edu.cn'){
+            fetchAPIUrl()
+        }
+        // 整五分钟时将数据存入对应时间数组下标
         if(myDate.getMinutes()%5 === 0) {
             savaDataToArr()
         }
@@ -90,6 +114,7 @@ function setTimer () {
 
 // 程序入口
 function start () {
+    fetchAPIUrl()
     readDataFromFile()
     setTimer()
 
