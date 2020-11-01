@@ -14,17 +14,12 @@ for (let i = 0; i < arrData.length; i++) {
 }
 
 // 从主页取出当前的预约页面 URL
-let urlAPI = 'http://rgyy.wfust.edu.cn'
-function fetchAPIUrl () {
-    axios.get(url)
+let urlAPI = undefined
+async function fetchAPIUrl () {
+    await axios.get(url)
         .then(function (response) {
             const $ = cheerio.load(response.data)
-            urlAPI = 'http://rgyy.wfust.edu.cn'+ ($('.btn-info').attr('href'))
-            if (urlAPI !== 'http://rgyy.wfust.edu.cn'){
-                console.log('成功获取今日地址 '+ urlAPI)
-            } else {
-                console.log('获取有误，可能是接口有误或服务器关机')
-            }
+            urlAPI = $('.btn-info').attr('href')
         })
         .catch(function (error) {
             console.error(error)
@@ -35,11 +30,11 @@ function fetchAPIUrl () {
 // 请求解析当前人数,返回当前人数
 async function fetchNumFromHtml () {
     let counterDomNum = 0
-    await axios.get(urlAPI)
+    await axios.get('http://rgyy.wfust.edu.cn'+ urlAPI)
         .then(function (response) {
             const $ = cheerio.load(response.data,{decodeEntities: false})
             const counterDom = $("body > div.col-xs-12.col-sm-9.xiaoqu > div.x_panel > div.col-xs-12.col-md-9.content > div:nth-child(2)").text().substring(6,14)
-            console.log('当前数据 RAW： ' + counterDom)
+            console.log('当前原始数据： ' + counterDom)
             counterDomNum = parseInt(counterDom.split('/')[0])
         })
         .catch(function (error) {
@@ -54,10 +49,15 @@ function savaDataToArr () {
     const subscript = myDate.getHours()*12 + Math.floor(myDate.getMinutes()/5)
     const day = myDate.getDay()
 
-    fetchNumFromHtml().then(num => {
-        arrData[day][subscript] = num
-        console.log(num + ' in ' + subscript + ' at ' + day)
-    })
+    if (urlAPI === undefined) {
+        console.log('当前不能获取有效数据')
+        arrData[day][subscript] = null
+    } else {
+        fetchNumFromHtml().then(num => {
+            arrData[day][subscript] = num
+            console.log(num + ' in ' + subscript + ' at ' + day)
+        })
+    }
 }
 
 // 保存数组到文件
@@ -96,10 +96,8 @@ function setTimer () {
     // 半分钟一次触发，检查时间是否整五分钟，并获取新的 API 地址
     setInterval(function() {
         const myDate = new Date()
-        // 没有有效 API 地址的时候每半分钟获取一次
-        if (urlAPI === 'http://rgyy.wfust.edu.cn'){
-            fetchAPIUrl()
-        }
+        // 每半分钟获取一次 API 地址
+        fetchAPIUrl()
         // 整五分钟时将数据存入对应时间数组下标
         if(myDate.getMinutes()%5 === 0) {
             savaDataToArr()
