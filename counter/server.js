@@ -20,7 +20,7 @@ async function fetchAPIUrl () {
         .then(function (response) {
             const myDate = new Date()
             const $ = cheerio.load(response.data)
-            if(myDate.getHours <= 21 && myDate.getHours >= 5) {
+            if(myDate.getHours() <= 21 && myDate.getHours() >= 5) {
                 urlAPI = $('.btn-info').attr('href')
             }
         })
