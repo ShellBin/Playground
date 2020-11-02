@@ -18,8 +18,11 @@ let urlAPI = undefined
 async function fetchAPIUrl () {
     await axios.get(url)
         .then(function (response) {
+            const myDate = new Date()
             const $ = cheerio.load(response.data)
-            urlAPI = $('.btn-info').attr('href')
+            if(myDate.getHours <= 21 && myDate.getHours >= 5) {
+                urlAPI = $('.btn-info').attr('href')
+            }
         })
         .catch(function (error) {
             console.error(error)
