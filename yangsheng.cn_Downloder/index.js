@@ -1,6 +1,7 @@
 const axios = require('axios')
 const cheerio = require('cheerio')
 const fs = require('fs')
+const path = require('path');
 const readline = require('readline').createInterface({
     input: process.stdin,
     output: process.stdout
@@ -9,7 +10,9 @@ const readline = require('readline').createInterface({
 let startDate = null
 
 const url = 'http://yangsheng.cn'
-const thread = 3
+// 个人站长免费服务不易，不使用多线程并发下载
+// const thread = 3
+const dirName = '杨生每日一歌'
 
 // 程序入口，先获取用户的日期输入
 new function setDate() {
@@ -47,7 +50,18 @@ function creatTask() {
         // 当列表不为空则下载该月份对应曲目
         if (JSON.stringify(list) !== '{}') {
             // console.log(list)
-            // todo: 从列表中取出 url 逐个下载
+            // 检查是否存在下载目录
+            const writePath = `./${dirName}/${startDate.getFullYear()}/${startDate.getMonth()+1}/`
+            if (!fs.existsSync(writePath)) {
+                mkdirRecursion(writePath)
+            }
+            // 发起下载
+            const listLength = Object.keys(list).length
+            console.log(`在${startDate.getFullYear()}年${startDate.getMonth()+1}月`)
+            console.log(`共有 ${listLength} 首歌曲需要下载`)
+            for (let item in list) {
+                downloadSong(list[item].url, writePath, list[item].name)
+            }
         } else {
             console.log(`${startDate.getFullYear()}年${startDate.getMonth()+1}月没有曲目`)
             startDate.setMonth(startDate.getMonth()+1)
@@ -84,7 +98,34 @@ async function fetchList() {
     })
 }
 
-// 传入 url 下载歌曲
-function downloadSong(url) {
+// 递归创建新目录
+function mkdirRecursion(dirName) {
+    if (fs.existsSync(dirName)) {
+        return true
+    } else {
+        if (mkdirRecursion(path.dirname(dirName))) {
+            fs.mkdirSync(dirName)
+            return true
+        }
+    }
+}
 
+// 下载歌曲
+function downloadSong(songUrl, writePath, writeName) {
+    http.get(songUrl, (req) => {
+        let song = '';
+        req.on('data',function (chunk) {
+            song += chunk;
+        })
+		req.setEncoding('binary');
+        req.on('end',function () {
+            fs.writeFile(writePath + writeName + '.mp3', song, 'binary', (err) => {
+                if (!err) {
+                    console.log(`已下载 ${writeName}`)
+                } else {
+                    console.error(err)
+                }
+            })
+        })
+    })
 }
