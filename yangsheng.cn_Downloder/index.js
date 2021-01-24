@@ -1,5 +1,7 @@
 const axios = require('axios')
+const http = require('http')
 const cheerio = require('cheerio')
+const async = require('async')
 const fs = require('fs')
 const path = require('path');
 const readline = require('readline').createInterface({
@@ -10,8 +12,8 @@ const readline = require('readline').createInterface({
 let startDate = null
 
 const url = 'http://yangsheng.cn'
-// 个人站长免费服务不易，不使用多线程并发下载
-// const thread = 3
+// 个人站长免费服务不易，不开太多线程下载
+const threads = 3
 const dirName = '杨生每日一歌'
 
 // 程序入口，先获取用户的日期输入
@@ -37,6 +39,7 @@ new function setDate() {
 }
 
 // 创建一个下载任务，将会拉取对应年月列表并发起下载
+let writePath = ''
 function creatTask() {
     const now = new Date()
     // 和当前日期比较，当接下来的日期晚于当前日期则表示下载已完成
@@ -51,7 +54,7 @@ function creatTask() {
         if (JSON.stringify(list) !== '{}') {
             // console.log(list)
             // 检查是否存在下载目录
-            const writePath = `./${dirName}/${startDate.getFullYear()}/${startDate.getMonth()+1}/`
+            writePath = `./${dirName}/${startDate.getFullYear()}/${startDate.getMonth()+1}/`
             if (!fs.existsSync(writePath)) {
                 mkdirRecursion(writePath)
             }
@@ -59,9 +62,16 @@ function creatTask() {
             const listLength = Object.keys(list).length
             console.log(`在${startDate.getFullYear()}年${startDate.getMonth()+1}月`)
             console.log(`共有 ${listLength} 首歌曲需要下载`)
-            for (let item in list) {
-                downloadSong(list[item].url, writePath, list[item].name)
-            }
+            console.log(`个人站长免费服务不易，当前同时下载${threads}首歌`)
+            async.mapLimit(list, threads, downloadSong.bind(this), (err) => {
+                if (err) {
+                    console.error(err)
+                } else {
+                    console.log('FINISHED')
+                    startDate.setMonth(startDate.getMonth()+1)
+                    creatTask()
+                }
+            })
         } else {
             console.log(`${startDate.getFullYear()}年${startDate.getMonth()+1}月没有曲目`)
             startDate.setMonth(startDate.getMonth()+1)
@@ -111,20 +121,21 @@ function mkdirRecursion(dirName) {
 }
 
 // 下载歌曲
-function downloadSong(songUrl, writePath, writeName) {
-    http.get(songUrl, (req) => {
-        let song = '';
-        req.on('data',function (chunk) {
-            song += chunk;
+function downloadSong(item, callback) {
+    const songUrl = item.url
+    const writeName = item.name.replace(/\\/g,'&')
+    // console.log(`${songUrl}_${writePath}${writeName}`)
+    console.log(`正在下载 ${writeName}`)
+    return http.get(songUrl, (req) => {
+        let song = ''
+        req.on('data', (chunk) => {
+            song += chunk
         })
-		req.setEncoding('binary');
-        req.on('end',function () {
+		req.setEncoding('binary')
+        req.on('end', () => {
             fs.writeFile(writePath + writeName + '.mp3', song, 'binary', (err) => {
-                if (!err) {
-                    console.log(`已下载 ${writeName}`)
-                } else {
-                    console.error(err)
-                }
+                console.log(`已下载 ${writeName}`)
+                callback(err)
             })
         })
     })
