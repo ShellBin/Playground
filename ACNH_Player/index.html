@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACNH_Player</title>
+</head>
+<audio id="bgmPlayer" src=""></audio>
+
+<div class="page_area">
+    <div class="page_container">
+        <div class="cd_container">
+            <div id="cd" onclick="StartPlayBGM()" style="background:url(img/cd.png); height:184px; width:184px"></div>
+        </div>
+        <div class="date">
+            <div class="time">
+                <span id="disp_time" style="font-size: 50px;"></span>
+                <span id="disp_ampm" style="font-size: 20px; margin-left: 10px;"></span>
+            </div>
+            <div class="mdw">
+                <span id="disp_md" style="font-size: 30px"></span>
+                <span id="disp_w" style="font-size: 20px;"></span>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+// const musicPath = "ACNH_music/"
+const musicPath = 'https://d17orwheorv96d.cloudfront.net/new-horizons/'
+
+function StartPlayBGM() {
+    const timeSting = new Date().toLocaleTimeString('en-US')
+    const bgmPlayer = document.getElementById("bgmPlayer")
+    const cd = document.getElementById("cd")
+
+    // bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2)}_ACNH.mp3`
+    bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2).toLowerCase()}.ogg`
+    bgmPlayer.play()
+    bgmPlayer.addEventListener("ended", () => {
+        StartPlayBGM()
+    });
+
+    cd.onclick = null
+    cd.classList.add("rotation")
+}
+
+function flashTime() {
+    const date = new Date()
+    const timeSting = date.toLocaleTimeString('en-US')
+
+    const disp_m = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    const disp_w = ["Mon", "Tuse", "Wed", "Thur", "Fri", "Sat", "Sun"]
+
+    document.getElementById("disp_time").innerHTML = timeSting.substr(0, 5)
+    document.getElementById("disp_ampm").innerHTML = timeSting.slice(-2)
+    document.getElementById("disp_md").innerHTML = `${disp_m[date.getMonth()]} ${date.getDate()}`
+    document.getElementById("disp_w").innerHTML = disp_w[date.getDay()-1];
+}
+
+flashTime()
+setInterval("flashTime()",5000)
+
+</script>
+
+<style type="text/css">
+    body {
+        margin: 0;
+    }
+    .page_area {
+        background: url(img/background.jpg) no-repeat center;
+        min-height:100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .page_container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .cd_container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 278px;
+        width: 278px;
+        border:10px solid #FFF;
+        border-radius: 25px;
+    }
+    .cd {
+        background:url(img/cd.png);
+        height:184px;
+        width:184px;
+    }
+    @keyframes rotation{
+        from {transform: rotate(0deg);}
+        to {transform: rotate(360deg);}
+    }
+    .rotation{
+        transform: rotate(360deg);
+        animation: rotation 3s linear infinite;
+    }
+    .date {
+        color: #FFF;
+        margin-top: 100px;
+    }
+    .time {
+        border-bottom: 2px solid #FFF;
+    }
+
+</style>
+</html>
