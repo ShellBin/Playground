@@ -51,10 +51,10 @@ function clickCD() {
 }
 
 function startPlayBGM() {
-    const timeSting = new Date().toLocaleTimeString('en-US')
     const cd = document.getElementById("cd")
 
     function generateUrl() {
+        const timeSting = new Date().toLocaleTimeString('en-US')
         bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2).toLowerCase()}.ogg`
         // bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2)}_ACNH.mp3`
     }
