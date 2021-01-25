@@ -9,7 +9,7 @@
 <div class="page_area">
     <div class="page_container">
         <div class="cd_container">
-            <div id="cd" onclick="StartPlayBGM()" style="background:url(img/cd.png); height:184px; width:184px"></div>
+            <div id="cd" onclick="clickCD()" style="background:url(./img/cd.png); height:184px; width:184px"></div>
         </div>
         <div class="date">
             <div class="time">
@@ -28,29 +28,51 @@
 <script>
 // const musicPath = "ACNH_music/"
 const musicPath = 'https://d17orwheorv96d.cloudfront.net/new-horizons/'
+const bgmPlayer = document.getElementById("bgmPlayer")
+let playerStatus = 0
 
-function StartPlayBGM() {
-    const timeSting = new Date().toLocaleTimeString('en-US')
-    const bgmPlayer = document.getElementById("bgmPlayer")
-    const cd = document.getElementById("cd")
-
-    // bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2)}_ACNH.mp3`
-    bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2).toLowerCase()}.ogg`
-    bgmPlayer.play()
-    bgmPlayer.addEventListener("ended", () => {
-        StartPlayBGM()
-    });
-
-    cd.onclick = null
-    cd.classList.add("rotation")
+// 困了不想好好写了
+function clickCD() {
+    if (playerStatus < 1) {
+        startPlayBGM()
+        cd.classList.add("rotation")
+        playerStatus = 1
+    } else if (playerStatus === 1) {
+        bgmPlayer.pause()
+        cd.classList.add("paused")
+        cd.classList.remove("active")
+        playerStatus = 2
+    } else {
+        bgmPlayer.play()
+        cd.classList.add("active")
+        cd.classList.remove("paused")
+        playerStatus = 1
+    }
 }
 
-function flashTime() {
+function startPlayBGM() {
+    const timeSting = new Date().toLocaleTimeString('en-US')
+    const cd = document.getElementById("cd")
+
+    function generateUrl() {
+        bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2).toLowerCase()}.ogg`
+        // bgmPlayer.src = `${musicPath}${timeSting.split(":")[0]}${timeSting.slice(-2)}_ACNH.mp3`
+    }
+
+    generateUrl()
+    bgmPlayer.play()
+    bgmPlayer.addEventListener("ended", () => {
+        generateUrl()
+        bgmPlayer.play()
+    })
+}
+
+function freshTime() {
     const date = new Date()
     const timeSting = date.toLocaleTimeString('en-US')
 
     const disp_m = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    const disp_w = ["Mon", "Tuse", "Wed", "Thur", "Fri", "Sat", "Sun"]
+    const disp_w = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
     document.getElementById("disp_time").innerHTML = timeSting.substr(0, 5)
     document.getElementById("disp_ampm").innerHTML = timeSting.slice(-2)
@@ -58,8 +80,8 @@ function flashTime() {
     document.getElementById("disp_w").innerHTML = disp_w[date.getDay()-1];
 }
 
-flashTime()
-setInterval("flashTime()",5000)
+freshTime()
+setInterval("freshTime()",5000)
 
 </script>
 
@@ -102,6 +124,12 @@ setInterval("flashTime()",5000)
         transform: rotate(360deg);
         animation: rotation 3s linear infinite;
     }
+    .active {
+        animation-play-state: running;
+        }
+    .paused {
+        animation-play-state: paused;
+    }
     .date {
         color: #FFF;
         margin-top: 100px;
@@ -109,6 +137,7 @@ setInterval("flashTime()",5000)
     .time {
         border-bottom: 2px solid #FFF;
     }
+    
 
 </style>
 </html>
