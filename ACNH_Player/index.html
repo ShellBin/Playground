@@ -74,7 +74,7 @@ function freshTime() {
     const disp_m = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     const disp_w = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    document.getElementById("disp_time").innerHTML = timeSting.substr(0, 5)
+    document.getElementById("disp_time").innerHTML = `${timeSting.split(":")[0]}:${timeSting.split(":")[1]}`
     document.getElementById("disp_ampm").innerHTML = timeSting.slice(-2)
     document.getElementById("disp_md").innerHTML = `${disp_m[date.getMonth()]} ${date.getDate()}`
     document.getElementById("disp_w").innerHTML = disp_w[date.getDay()-1];
