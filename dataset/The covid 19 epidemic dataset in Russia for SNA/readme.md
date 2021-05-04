@@ -1,0 +1,1 @@
+# The covid 19 epidemic dataset in Russia for SNA
